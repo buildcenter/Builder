@@ -1,0 +1,1 @@
+properties {	$x = 200}task default -depends Nested2CheckXtask nested2CheckX {	assert ($x -eq 200) ('Expect $x to be 100 (actual value is {0})' -f $x)}

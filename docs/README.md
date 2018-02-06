@@ -58,6 +58,14 @@ Show me the money
 -----------------
 There isn't a ton of API/documentation, because this is the kind of stuff that is best learnt by examples.
 
-Just look through the build scripts under (../Source/Builder.Tests/Samples)[Source/Builder.Tests/Samples]. It doesn't take more than 15 minutes to become a build automation wizard :D
+Just browse the sample scripts under [source/Builder.Tests/Samples](../source/Builder.Tests/Samples). It doesn't take more than 15 minutes to become a build automation wizard :dash:
 
 
+I want the advanced stuff
+-------------------------
+Here are the documentation for various conceptual topics:
+- [Error Handling](./error_handling.md)
+- [Conditional tasks](./conditional_task.md)
+
+More detailed description on various keywords:
+- [include](./include.md)

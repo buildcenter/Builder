@@ -37,7 +37,7 @@ My work here is done!
 ```
 
 Now that feels a lot more specialized (read shorter) than working in bash, right? It is so dead simple 
-that you can [write your own build scripts](Docs/README.md) in minutes.
+that you can [write your own build scripts](docs/README.md) in minutes.
 
 
 

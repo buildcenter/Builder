@@ -1,17 +1,33 @@
-﻿$toolsDir = $PSScriptRoot
+﻿Param(
+	[Parameter()]
+	[switch]$Publish
+)
+
+# Hardcoded settings. Do not touch!!!
+# The repo must be 1 level above this build script.
+$toolsDir = $PSScriptRoot
 $repoDir = Resolve-Path (Join-Path $toolsDir -ChildPath '..') | select -expand Path
-$sourceDir = Join-Path $repoDir -ChildPath 'Source'
-$workingDir = Join-Path $repoDir -ChildPath 'Working'
 $repoName = Split-Path $repoDir -Leaf
-$releaseDir = Join-Path $repoDir -ChildPath 'Releases'
-$credDir = Join-Path $repoDir -ChildPath 'Credentials'
+
+# Special directorys. Make sure folders are in lower case for compat with Linux systems.
+$docsDir = Join-Path $repoDir -ChildPath 'docs'
+$sourceDir = Join-Path $repoDir -ChildPath 'source'
+$workingDir = Join-Path $repoDir -ChildPath 'working'
+$releaseDir = Join-Path $repoDir -ChildPath 'releases'
+$credDir = Join-Path $repoDir -ChildPath 'credentials'
+$packageCommonFiles = @(
+	"icon.png"
+	"LICENSE.txt"
+	"README.md"
+	"THIRD-PARTY-LICENSE.txt"
+)
 
 dir (Join-Path $toolsDir -ChildPath '*.psm1') | ForEach-Object {
     Write-Output ("Importing add-on module: Tools/{0}" -f $_.Name)
     ipmo $_.FullName -Force
 }
 
-# create working dir
+# create release and working dir
 @($releaseDir, $workingDir) | ForEach-Object {
     if (-not (Test-Path $_))
     {
@@ -244,14 +260,10 @@ if (Test-Path $releaseVersionDir)
 
 md $releaseVersionDir | Out-Null
 
-$commonPkgFiles = @(
-    'LICENSE.txt', 'THIRD-PARTY-LICENSE.txt', 'README.md', 'icon.png'
-)
-
 dir $workingDir -Directory | ForEach-Object {
     Write-Output ('Generating package: {0}' -f $_.Name)
     $pkgItemPaths = @()
-    $commonPkgFiles | ForEach-Object {
+    $packageCommonFiles | ForEach-Object {
         $pkgItemPaths += Join-Path $repoDir -ChildPath $_
     }
     $pkgItemPaths += $_.FullName
@@ -269,4 +281,20 @@ dir $workingDir -Directory | ForEach-Object {
     }
 
     Compress-Archive -Path $pkgItemPaths -DestinationPath (Join-Path $releaseVersionDir -ChildPath $pkgFileName)
+}
+
+if ($Publish)
+{
+	Write-Output ('Publishing module to PSGallery: Builder')
+	$nugetApiKey = Get-Content (Join-Path $credDir -ChildPath 'powershell_gallery_nuget_apikey.txt')
+
+	# Possible issues:
+	# - PSModule name may already be taken in PSGallery
+	# - PowerShellGet requires NuGet.exe (PowerShellGet will prompt)
+	$publishModuleParams = @{
+	    Path = (Join-Path $workingDir -ChildPath 'Builder')
+	    NuGetApiKey = $nugetApiKey
+	    Repository = 'PSGallery'
+	}
+	Publish-Module @publishModuleParams
 }

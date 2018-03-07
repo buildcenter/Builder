@@ -787,13 +787,16 @@ function Say
  
     if ($PSCmdlet.ParameterSetName -eq 'DividerSet')
     {
-        Write-Output ([Environment]::NewLine)
+        Write-Output ''
         WriteColoredOutput ('+' * $dividerMaxLength) -ForegroundColor Cyan
-        Write-Output ([Environment]::NewLine)
+        Write-Output ''
     }
     elseif ($PSCmdlet.ParameterSetName -eq 'NewLineSet')
     {
-        Write-Output ([Environment]::NewLine * $LineCount)
+        for ($i = 0; $i -lt $LineCount; $i++)
+        {
+            Write-Output ''
+        }
     }
     elseif ($PSCmdlet.ParameterSetName -eq 'NormalSet')
     {

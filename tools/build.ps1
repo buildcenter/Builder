@@ -22,7 +22,11 @@ $packageCommonFiles = @(
 	"THIRD-PARTY-LICENSE.txt"
 )
 
-dir (Join-Path $toolsDir -ChildPath '*.psm1') | ForEach-Object {
+dir (Join-Path $toolsDir -ChildPath 'PSModules\*.psm1') | ForEach-Object {
+    Write-Output ("Importing add-on module: Tools/{0}" -f $_.Name)
+    ipmo $_.FullName -Force
+}
+dir (Join-Path $toolsDir -ChildPath 'PSModules') -Directory | ForEach-Object {
     Write-Output ("Importing add-on module: Tools/{0}" -f $_.Name)
     ipmo $_.FullName -Force
 }
@@ -49,41 +53,31 @@ Invoke-Robocopy -SourcePath $sourceDir -DestinationPath $workingDir -Mirror -Ver
 
 Write-Output 'Preparing templating data'
 $tmplData = ConvertFrom-Json (Get-Content -Path (Join-Path $toolsDir -ChildPath 'projectInfo.json') -Raw)
-$tmplDataHash = @{}
-$tmplData | Get-Member -MemberType NoteProperty | select -expand Name | ForEach-Object {
-    $tmplDataHash."$_" = $tmplData."$_"
-}
-# dynamic vars
-$tmplDataHash.repoDir = $repoDir
-
-Write-Output 'Importing template language helper functions'
-[Management.Automation.Language.Parser]::ParseInput((Get-Content -Path (Join-Path $toolsDir -ChildPath 'template_helpers.ps1') -Raw), [ref]$null, [ref]$null).FindAll({
-    param($ast)
-    $ast -is [System.Management.Automation.Language.FunctionDefinitionAst]
-}, $false) | ForEach-Object {
-    $tmplDataHash."$($_.Name)" = [scriptblock]::Create($_.Body.Extent.Text)
+$tmplDataHash = @{
+    module = $tmplData
+    repoDir = $repoDir
 }
 
 Write-Output 'Generating from templates'
-dir (Join-Path $workingDir -ChildPath '*.pstmpl') -Recurse -File | ForEach-Object {
+dir (Join-Path $workingDir -ChildPath '*.tmpl1') -Recurse -File | ForEach-Object {
     $tmplFilePath = $_.FullName
     $tmplFileName = $_.Name
     $tmplFileDir = $_.Directory.FullName
     $tmplText = Get-Content $tmplFilePath -Raw
 
-    $outputName = $tmplFileName.Substring(0, $tmplFileName.Length - '.pstmpl'.Length)
+    $outputName = $tmplFileName.Substring(0, $tmplFileName.Length - '.tmpl1'.Length)
     $outputPath = Join-Path $tmplFileDir -ChildPath $outputName
 
     $tmplDataHash.tmplFile = $tmplFilePath
     $tmplDataHash.pwd = $tmplFileDir
     
     Write-Output ('* {0} -> {1}' -f $tmplFilePath.Substring($workingDir.Length), $outputPath.Substring($workingDir.Length))
-    $outContent = $tmplDataHash | Expand-PSTemplate -Template $tmplText
+    $outContent = ConvertFrom-Template -InputObject $tmplDataHash -Template $tmplText
     $outContent | Set-Content -Path $outputPath -Encoding UTF8
 }
 
 Write-Output 'Removing templates'
-dir (Join-Path $workingDir -ChildPath '*.pstmpl') -Recurse -File | ForEach-Object {
+dir (Join-Path $workingDir -ChildPath '*.tmpl1') -Recurse -File | ForEach-Object {
     Write-Output ('* {0}' -f $_.FullName.Substring($workingDir.Length))
     del $_
 }
@@ -243,8 +237,8 @@ foreach ($projectDir in $allProjects)
 
 # --------------------------
 
-$releaseVersion = $tmplDataHash.moduleVersion
-if ($tmplDataHash.prerelease -eq 'True')
+$releaseVersion = $tmplDataHash.module.moduleVersion
+if ($tmplDataHash.module.prerelease -eq 'True')
 {
     $releaseVersionDir = Join-Path $releaseDir -ChildPath "v$releaseVersion-prerelease"
 }

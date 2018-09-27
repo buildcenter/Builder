@@ -1,0 +1,58 @@
+﻿TOPIC
+    about_{{ module.moduleName }}
+
+SYNOPSIS
+    {{ module.synopsis }}
+
+VERSION
+    You are running version {{ module.moduleVersion }} of {{ module.moduleName }} :)
+
+SHORT DESCRIPTION
+    {{ module.description }}
+
+INSTALLATION
+    The best option (if you are on Windows 10 or similar) is to use the `Install-Package` command from 
+    PowerShell.
+
+    # Using Install-Package
+
+    1. `Install-Package {{ module.moduleName }}`
+
+    2. `ipmo {{ module.moduleName }}`
+
+    3. `Get-Help about_{{ module.moduleName }}`, or `Get-Command -Module {{ module.moduleName }}`.
+
+    4. YOUR WORK HERE IS DONE.
+
+
+    # Manual portable installation
+
+    If that doesn't work for you, try installing it manually.
+
+    1. Download the latest release ({{ module.downloadBaseUrl }}{{ module.moduleName | string.downcase }}.zip)[from here]. If you want a specific 
+       version, it's something like `{{ module.downloadBaseUrl }}{{ module.moduleName | string.downcase }}.{{ module.moduleVersion }}.zip`.
+
+    2. Copy the '{{ module.moduleName }}' folder in archive to `Documents\WindowsPowerShell\Modules`.
+    So you get `Documents\WindowsPowerShell\Modules\{{ module.moduleName }}\{{ module.moduleName }}.psd1`, ...
+
+    3. Make sure your PowerShell policy allows running scripts (in an escalated terminal, type in: 
+    `Set-ExecutionPolicy Unrestricted`).
+
+    4. Here is a short script snipplet to automate the steps above:
+    ```
+    wget {{ module.downloadBaseUrl }}{{ module.moduleName | string.downcase }}.zip -OutFile $env:TEMP\{{ module.moduleName | string.downcase }}.zip
+    Expand-Archive $env:TEMP\{{ module.moduleName | string.downcase }}.zip $env:PSModulePath.Split(';')[0]
+    ipmo {{ module.moduleName }}
+    ```
+
+CHANGELOG
+    {{ module.docUrlBase }}CHANGELOG.md
+
+LINKS
+    {{ module.projectUrl }}
+
+COPYRIGHT
+    {{ module.copyright }}
+
+LICENSE
+    See "LICENSE.txt" file for details.
